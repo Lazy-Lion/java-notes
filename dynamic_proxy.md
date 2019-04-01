@@ -1,4 +1,4 @@
-<h1 algin="center">动态代理</h1>
+# 动态代理
 ## 一、代理模式 (Proxy Pattern)
 
 > 定义(from wikipedia): A proxy is a wrapper or agent object that is being called by the client to access the real serving object behind the scenes.
@@ -8,7 +8,7 @@
 - 扩展额外的功能时不需要直接修改目标类，而是通过添加代理的方式，如日志功能等;
 
 ### 1.2 代理模式UML类图
-![UML](../images/proxy_uml_class.png)
+![UML](../master/images/proxy_uml_class.png)
 
 - Subject: 代理类和目标类共同实现的接口
 - Proxy: 代理类
@@ -373,10 +373,107 @@ ProxyGenerator 代码分析：
 2. 动态生成的代理类默认包含java.lang.Object的3个方法 (hashCode,equlas(),toString())
 3. 实现的各个接口中，当方法签名相同时(方法名，参数名，参数类型相同)：
     - 不允许有多个返回类型为基本类型的方法
-    - 如果存在多个返回类型，且返回类型直接存在继承关系，则指定该方法的返回类型为最底层子类型；不允许存在多个返回类型且没有继承关系
-    - 
+    - 如果存在多个返回类型，且返回类型直接存在继承关系，则指定该方法的返回类型为最底层子类型；不允许存在多个没有继承关系的返回类型
+4. 添加构造方法，参数为InvocationHandler实例
+5. 添加Object中的3个方法以及各个接口的方法。 并为每个方法添加对应的 private staic Method 域，域名为对应的方法名(方法和域的最大数量限制是65535)
+6. 添加静态块，用于初始化之前添加的Method域
 
 
+设置 *System.getProperties().put("sun.misc.ProxyGenerator.saveGeneratedFiles","true");*，将2.2.2中动态生成的代理类反编译得到如下代码：
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.UndeclaredThrowableException;
+
+final class $Proxy0 extends Proxy implements Subject {
+    private static Method m1;
+    private static Method m4;
+    private static Method m5;
+    private static Method m2;
+    private static Method m3;
+    private static Method m0;
+
+    public $Proxy0(InvocationHandler var1) throws  {
+        super(var1);
+    }
+
+    public final boolean equals(Object var1) throws  {
+        try {
+            return (Boolean)super.h.invoke(this, m1, new Object[]{var1});
+        } catch (RuntimeException | Error var3) {
+            throw var3;
+        } catch (Throwable var4) {
+            throw new UndeclaredThrowableException(var4);
+        }
+    }
+
+    public final void key(Integer var1) throws  {
+        try {
+            super.h.invoke(this, m4, new Object[]{var1});
+        } catch (RuntimeException | Error var3) {
+            throw var3;
+        } catch (Throwable var4) {
+            throw new UndeclaredThrowableException(var4);
+        }
+    }
+
+    public final Number refer(int var1) throws  {
+        try {
+            return (Number)super.h.invoke(this, m5, new Object[]{var1});
+        } catch (RuntimeException | Error var3) {
+            throw var3;
+        } catch (Throwable var4) {
+            throw new UndeclaredThrowableException(var4);
+        }
+    }
+
+    public final String toString() throws  {
+        try {
+            return (String)super.h.invoke(this, m2, (Object[])null);
+        } catch (RuntimeException | Error var2) {
+            throw var2;
+        } catch (Throwable var3) {
+            throw new UndeclaredThrowableException(var3);
+        }
+    }
+
+    public final int value(int var1) throws  {
+        try {
+            return (Integer)super.h.invoke(this, m3, new Object[]{var1});
+        } catch (RuntimeException | Error var3) {
+            throw var3;
+        } catch (Throwable var4) {
+            throw new UndeclaredThrowableException(var4);
+        }
+    }
+
+    public final int hashCode() throws  {
+        try {
+            return (Integer)super.h.invoke(this, m0, (Object[])null);
+        } catch (RuntimeException | Error var2) {
+            throw var2;
+        } catch (Throwable var3) {
+            throw new UndeclaredThrowableException(var3);
+        }
+    }
+
+    static {
+        try {
+            m1 = Class.forName("java.lang.Object").getMethod("equals", Class.forName("java.lang.Object"));
+            m4 = Class.forName("dynamicproxy.Subject").getMethod("key", Class.forName("java.lang.Integer"));
+            m5 = Class.forName("dynamicproxy.Subject").getMethod("refer", Integer.TYPE);
+            m2 = Class.forName("java.lang.Object").getMethod("toString");
+            m3 = Class.forName("dynamicproxy.Subject").getMethod("value", Integer.TYPE);
+            m0 = Class.forName("java.lang.Object").getMethod("hashCode");
+        } catch (NoSuchMethodException var2) {
+            throw new NoSuchMethodError(var2.getMessage());
+        } catch (ClassNotFoundException var3) {
+            throw new NoClassDefFoundError(var3.getMessage());
+        }
+    }
+}
+```
         
 
 
