@@ -21,7 +21,7 @@
 使用静态代理时，需要创建与目标类对应的代理类，代码量过大。同时，修改目标类后，代理类可能也要进行相应的修改。而动态代理不需要我们手动创建代理类，由jdk在运行时自动创建。
 ### 2.2 jdk 动态代理
 ##### 2.2.1 关键类和接口
-- java.lang.reflect.Proxy
+**java.lang.reflect.Proxy**
 ```java
 public class Proxy implements java.io.Serializable {
     
@@ -42,14 +42,14 @@ public class Proxy implements java.io.Serializable {
 }
 ```
 
-    + Proxy：代理类，jdk动态代理自动生成的代理类都是Proxy的子类；
-    + Proxy 提供静态方法newProxyInstance()用于创建代理类实例
-        * 参数 loader: 载入代理类的类加载器
-        * 参数 interfaces: 代理类需要实现的一组接口
-        * 参数 h: InvocationHandler 实例
-        * 方法返回类型为Object，实际上是Proxy的子类，并实现了interfaces中的接口
+- Proxy：代理类，jdk动态代理自动生成的代理类都是Proxy的子类；
+- Proxy 提供静态方法newProxyInstance()用于创建代理类实例
+    + 参数 loader: 载入代理类的类加载器
+    + 参数 interfaces: 代理类需要实现的一组接口
+    + 参数 h: InvocationHandler 实例
+    + 方法返回类型为Object，实际上是Proxy的子类，并实现了interfaces中的接口
 
-- java.lang.reflect.InvocationHandler
+**java.lang.reflect.InvocationHandler**
 ```java
 /**
   * Processes a method invocation on a proxy instance and returns
@@ -63,14 +63,14 @@ public interface InvocationHandler {
 } 
 ```
 
-    - 每个代理实例(proxy)都会关联一个InvocationHandler实例(h)，proxy调用方法被处理成调用p.invoke()
-    - invoke():
-        + 参数 proxy: 代理类实例
-        + 参数 method: 目标类指定方法的Method实例
-        + 参数 args: 目标类指定方法的一组参数
-        + h.invoke()方法返回类型为Object，假设其实际类型为R:
-            * 如果被代理方法的返回类型是基本类型(boolean,char,int,...),R为其对应的包装类(不能是null)
-            * 如果被代理方法的返回类型是引用类型(T)，R可以是T及其子类(可以是null)
+- 每个代理实例(proxy)都会关联一个InvocationHandler实例(h)，proxy调用方法被处理成调用p.invoke()
+- invoke():
+    + 参数 proxy: 代理类实例
+    + 参数 method: 目标类指定方法的Method实例
+    + 参数 args: 目标类指定方法的一组参数
+    + h.invoke()方法返回类型为Object，假设其实际类型为R:
+        * 如果被代理方法的返回类型是基本类型(boolean,char,int,...),R为其对应的包装类(不能是null)
+        * 如果被代理方法的返回类型是引用类型(T)，R可以是T及其子类(可以是null)
 
 ##### 2.2.2 show me code 
 ```java
@@ -248,7 +248,7 @@ private static Class<?> getProxyClass0(ClassLoader loader,
 } 
 ```
 
-代理类的类对象从proxyClassCache中获取，从 *proxyClassCache = new WeakCache(new KeyFactory(), new ProxyClassFactory());*可以看到，Cache中的值依赖于ProxyClassFactory。
+代理类的类对象从proxyClassCache中获取，从 *proxyClassCache = new WeakCache(new KeyFactory(), new ProxyClassFactory());* 可以看到，Cache中的值依赖于ProxyClassFactory。
 ```java 
 private static final class ProxyClassFactory
     implements BiFunction<ClassLoader, Class<?>[], Class<?>>
@@ -370,16 +370,16 @@ ProxyGenerator在 *sun.misc* 包下，jdk中没有相关源代码，参照 [Open
 ProxyGenerator 代码分析：
 
 1. 可以通过设置 *sun.misc.ProxyGenerator.saveGeneratedFiles* 属性，决定是否将字节码文件输出
-2. 动态生成的代理类默认包含java.lang.Object的3个方法 (hashCode,equlas(),toString())
-3. 实现的各个接口中，当方法签名相同时(方法名，参数名，参数类型相同)：
-    - 不允许有多个返回类型为基本类型的方法
-    - 如果存在多个返回类型，且返回类型直接存在继承关系，则指定该方法的返回类型为最底层子类型；不允许存在多个没有继承关系的返回类型
-4. 添加构造方法，参数为InvocationHandler实例
-5. 添加Object中的3个方法以及各个接口的方法。 并为每个方法添加对应的 private staic Method 域，域名为对应的方法名(方法和域的最大数量限制是65535)
+2. 动态生成的代理类默认包含java.lang.Object的3个方法 (hashCode(),equlas(),toString())
+3. 代理的接口中，当方法签名相同时(方法名，参数列表(类型、个数、顺序)相同)：
+    - 如果有多个返回类型，返回类型不允许存在基本类型或void
+    - 如果有多个返回类型，且返回类型之间存在继承关系，则指定该方法的返回类型为最底层子类型；不允许存在多个没有继承关系的返回类型
+4. 添加构造方法，参数类型为InvocationHandler，通过调用父类(java.lang.reflect.Proxy)构造方法实现( **3.1** 可以看到，Proxy类提供了一个protected构造方法)
+5. 添加Object中的3个方法以及各个接口的方法。 并添加对应各个方法的 **private static Method** 域，域名为对应的方法名(方法和域的最大数量限制是65535)
 6. 添加静态块，用于初始化之前添加的Method域
 
 
-设置 *System.getProperties().put("sun.misc.ProxyGenerator.saveGeneratedFiles","true");*，将2.2.2中动态生成的代理类反编译得到如下代码：
+设置 *System.getProperties().put("sun.misc.ProxyGenerator.saveGeneratedFiles","true");*，将 **2.2.2** 中动态生成的代理类反编译得到如下代码：
 ```java
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -474,6 +474,11 @@ final class $Proxy0 extends Proxy implements Subject {
     }
 }
 ```
+
+## 小结
+代理模式可以控制目标类的访问，易于功能的扩展。动态代理在静态代理的基础上，无需手动编写和维护代理类，大大减少了代码量。<br />
+jdk动态代理自动生成的代理类都是java.lang.reflect.Proxy的子类，并且实现了被代理的接口。jdk动态代理只允许代理接口(ProxyClassFactory获取代理类时会进行判断)。
+
         
 
 
