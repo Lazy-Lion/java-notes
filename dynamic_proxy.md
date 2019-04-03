@@ -477,7 +477,8 @@ final class $Proxy0 extends Proxy implements Subject {
 
 ## 小结
 代理模式可以控制目标类的访问，易于功能的扩展。动态代理在静态代理的基础上，无需手动编写和维护代理类，大大减少了代码量。<br />
-jdk动态代理自动生成的代理类都是java.lang.reflect.Proxy的子类，并且实现了被代理的接口。jdk动态代理只允许代理接口(ProxyClassFactory获取代理类时会进行判断)。
+jdk动态代理自动生成的代理类都是java.lang.reflect.Proxy的子类，并且实现了被代理的接口。jdk动态代理要求被代理的目标类实现一个或多个接口(ProxyClassFactory获取代理类时会进行判断)，并且只能代理接口中的方法以及Object类中的3个方法。<br />
+当需要代理没有实现接口的类时，CGLIB会是一个好的选择。[Create Proxies Dynamically Using CGLIB Library](http://jnb.ociweb.com/jnb/jnbNov2005.html)
 
         
 
