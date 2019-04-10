@@ -77,7 +77,7 @@ public class Main2 {
 
         /**
          * java 8 局部类可以访问外部语句块的局部变量和参数，但是需要局部变量
-         * 和参数是final或 effectively final。(Effective final 指的是变量或
+         * 和参数是final或 effectively final。(Effectively final 指的是变量或
          * 参数初始化之后不会改变，即拥有final的含义但没有使用final修饰。实际
          * 编译之后依然是final, 只是一个语法糖。)
          * 
@@ -193,13 +193,20 @@ public interface UnaryOperator<T> extends Function<T, T> {
 如 
 - java.lang.Runnable
 - java.util.Comparator
+- java.util.concurrent.Callable
+```java 
+@FunctionalInterface
+public interface Callable<V> { 
+    V call() throws Exception;
+}
+```
 
 ## 五、java 8 Lambda 表达式
 ### 5.1 Lambda 表达式
 > 定义(wikipedia):Lambda expression in computer programming, also called **anonymous function** , a function (or a subroutine) defined, and possibly called, without being bound to an identifier. Anonymous functions are often arguments being passed to higher-order functions, or used for constructing the result of a higher-order function that needs to return a function.
 
 ### 5.2 java 8 lambda expression
-##### 5.2.1 java lambda 表达式组成
+##### 5.2.1 lambda 表达式组成
 ```java
 (Integer p1,Integer p2) -> {
             return (double)(p1 + p2);
@@ -210,11 +217,14 @@ public interface UnaryOperator<T> extends Function<T, T> {
 (p1,p2) -> (double) (p1 + p2)
 ```
 
-1. 参数列表: 可以省略参数类型；如果只有一个参数，可以省略括号
+1. 参数列表: 可以省略参数类型(不能混合使用)；如果只有一个参数，可以省略括号
 2. 箭头：->
 3. 一个表达式或者语句块：
     - 如果只使用一个单独的表达式，返回值取决于表达式的值(void或其他类型的值)
     - 如果是一个语句块，则需要手写return语句返回值
+
+##### 5.2.2 lambda 表达式的类型
+java 是强类型语言，lambda表达式也需要声明类型。java中使用Functional Interface表示Lambda Expression的类型。
 
 
 
@@ -235,5 +245,48 @@ java 中的局部类和匿名类具有闭包的语义，但不是真正的闭包
 三、匿名类(#三、匿名类(Anonymous Class))中的代码编译之后会生成两个class文件：
 - AnonymousClass$1
 - AnonymousClass
-由于run()方法需要引用外部的局部变量b,所以依据闭包的定义，需要将变量b存储在一个可以让上述两个类同时访问的地方(如方法区)；但实际上局部变量存储在栈中，方法调用时压栈，方法返回时出栈。Java通过复制一个局部变量副本将变量b的值传递给内部类，为了保证一致性，要求内部类访问的外部局部变量必须是final。
+由于run()方法需要引用外部的局部变量b,所以依据闭包的定义，需要将变量b存储在一个可以让上述两个类同时访问的地方(如方法区)；但实际上局部变量存储在栈中，方法调用时压栈，方法返回时出栈。Java是通过复制一个局部变量副本将变量b的值传递给内部类，为了保证一致性，要求内部类访问的外部局部变量必须是final。<br /><br />
+使用javap命令反编译AnonymousClass, 截取AnonymousClass$1.class部分代码:
+```java
+ // int b = 3;
+  public void run();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=3, locals=1, args_size=1
+         0: getstatic     #5                  // Field java/lang/System.out:Ljava/io/PrintStream;
+         3: aload_0
+         4: getfield      #4                  // Field a:I
+         7: aload_0
+         8: getfield      #2                  // Field val$b:I
+        11: iadd
+        12: invokevirtual #6                  // Method java/io/PrintStream.println:(I)V
+        15: return 
+```
+
+```java
+ // final int b = 3;
+  public void run();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=3, locals=1, args_size=1
+         0: getstatic     #4                  // Field java/lang/System.out:Ljava/io/PrintStream;
+         3: aload_0
+         4: getfield      #3                  // Field a:I
+         7: iconst_3
+         8: iadd
+         9: invokevirtual #5                  // Method java/io/PrintStream.println:(I)V
+        12: return 
+```
+比较上述两段代码，可以看到使用局部变量b值的方式有所不同：
+- 代码段1：b的声明方式为 *int b = 3;*，即effectively final。通过AnonymousClass$1类域的方式调用b的值。实际上外部类（AnonymousClass）在实例化内部类（AnonymousClass$1）对象时，调用两个参数的构造方法，一个是外部类实例，另一个是变量b。(可自行使用javap查看完整反编译代码)
+- 代码段2：b的声明方式为 *final int b = 3;*，即 final。直接载入b的字面量值。
+- 不同的局部变量类型（引用类型，基本类型）实现变量传递的区别
+    + effectively final： 无论是引用类型还是基本类型都是通过构造方法传参实现
+    + final：
+        * 基本类型或String类型：
+            - 通过字面量赋值，并且在声明的 **同时** 赋值（如 String b = "string";），则直接载入b的字面量值
+            - 其他情况通过构造方法传参实现(即使是 int b; b = 3;)
+        * 其他引用类型(包括封装类)：通过构造方法传参实现
 
