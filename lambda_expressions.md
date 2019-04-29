@@ -217,32 +217,49 @@ public interface Callable<V> {
 (p1,p2) -> (double) (p1 + p2)
 ```
 
-1. 参数列表: 可以省略参数类型(不能混合使用)；如果只有一个参数，可以省略括号
+1. 参数列表: 可以省略参数类型(不能混合使用, 即部分省略)；如果只有一个参数，可以省略括号
 2. 箭头：->
 3. 一个表达式或者语句块：
     - 如果只使用一个单独的表达式，返回值取决于表达式的值(void或其他类型的值)
-    - 如果是一个语句块，则需要手写return语句返回值
+    - 如果是一个语句块，则需要手写return语句返回值，否则表示返回void
+    - 语句块中调用局部变量，需要保证局部变量(x)是final或effectively final 
+        + 使用lambda表达式之前必须对x有且仅有一次赋值
+        + 语句块中不能修改x的值（参数列表不允许存在与局部变量同名的参数）
+        + 使用lambda表达式之后同样不允许修改x的值
+```java 
+    public static void get(int x){
+        int y;
+        y = 1;  // 必须有且仅有一次赋值
+        Function<Integer, Integer> func = (a) -> {
+//            x = 1;  // 不允许修改
+//            y = 1;  // 不允许修改
+            return a + x + y;
+        };
+//        y = 1;  // 不允许修改
+//        x = 1;  // 不允许修改
+    }
+```
+    
 
 ##### 5.2.2 lambda 表达式的类型
-java 是强类型语言，lambda表达式也需要声明类型。java中使用Functional Interface表示Lambda Expression的类型。
+java 是强类型语言，lambda表达式也需要声明类型。java中使用Functional Interface表示Lambda Expression的类型。Lambda Expression具体对应的Interface是在运行时确定的，所以Lambda Expression不能单独使用。Lambda Expression必须在根据上下文可以确定指向的Functional Interface的场景使用，如方法参数、方法返回值或直接赋值给一个引用。
+
+## 六 、方法引用(Method Reference)
 
 
-
-## 、方法引用(Method Reference)
-
-## 四、 闭包(Closure)
-### 4.1 概念
+## 七、 闭包(Closure)
+### 7.1 概念
 > 定义(wikipedia)：In programming languages, a closure, also lexical closure or function closure, is a technique for implementing lexically scoped name binding in a language with first-class functions. Operationally, a closure is a record storing a function together with an environment. The environment is a mapping associating each free variable of the function (variables that are used locally, but defined in an enclosing scope) with the value or reference to which the name was bound when the closure was created.
 
 闭包是由函数和其相关的引用环境组成的实体(环境是指关联函数的自由变量的映射)。<br />
 
-### 4.2 java局部类、匿名类和闭包
+### 7.2 java局部类、匿名类和闭包
 java 中的局部类和匿名类具有闭包的语义，但不是真正的闭包。<br />
 
 关于内部类，Core Java中有如下描述：
 >Inner classes are translated into regular class files with $ (dollar signs) delimiting outer and inner class names and the virtual machine does not have any special knowledge about them.
 
-三、匿名类(#三、匿名类(Anonymous Class))中的代码编译之后会生成两个class文件：
+“三、匿名类”中的代码编译之后会生成两个class文件：
 - AnonymousClass$1
 - AnonymousClass
 由于run()方法需要引用外部的局部变量b,所以依据闭包的定义，需要将变量b存储在一个可以让上述两个类同时访问的地方(如方法区)；但实际上局部变量存储在栈中，方法调用时压栈，方法返回时出栈。Java是通过复制一个局部变量副本将变量b的值传递给内部类，为了保证一致性，要求内部类访问的外部局部变量必须是final。<br /><br />
